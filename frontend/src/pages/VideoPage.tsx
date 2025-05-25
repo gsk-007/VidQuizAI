@@ -1,15 +1,20 @@
 import { useParams } from "react-router"
 import { useQuery } from "@tanstack/react-query"
 import { fetchVideoStatus } from "@/lib/api"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { VideoStatusResponse } from "@/types/video"
 import ExportMCQsCSVButton from "@/components/ExportMCQsCSVButton"
 
-const POLLING_INTERVAL = 5000
+const POLLING_INTERVAL = 12000
+const MIN_LOADING_TIME = POLLING_INTERVAL * 0.4
 
 const VideoPage = () => {
   const { id } = useParams()
   const [shouldPoll, setShouldPoll] = useState(true)
+
+  // Track when loading started
+  const loadingStartTime = useRef<number | null>(null)
+  const [showLoader, setShowLoader] = useState(false)
 
   const { data, isLoading, isFetching } = useQuery<VideoStatusResponse>({
     queryKey: ["video-status", id],
@@ -19,12 +24,39 @@ const VideoPage = () => {
   })
 
   useEffect(() => {
+    if (isLoading || isFetching) {
+      if (!loadingStartTime.current) {
+        loadingStartTime.current = Date.now()
+      }
+      setShowLoader(true)
+    } else {
+      if (loadingStartTime.current) {
+        const elapsed = Date.now() - loadingStartTime.current
+
+        if (elapsed > MIN_LOADING_TIME) {
+          setShowLoader(false)
+          loadingStartTime.current = null
+        } else {
+          const remaining = MIN_LOADING_TIME - elapsed
+          const timeout = setTimeout(() => {
+            setShowLoader(false)
+            loadingStartTime.current = null
+          }, remaining)
+          return () => clearTimeout(timeout)
+        }
+      } else {
+        setShowLoader(false)
+      }
+    }
+  }, [isLoading, isFetching])
+
+  useEffect(() => {
     if (data?.status === "DONE") {
       setShouldPoll(false)
     }
   }, [data])
 
-  if (isLoading || isFetching) {
+  if (showLoader) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p className="text-xl text-gray-600 animate-pulse">
