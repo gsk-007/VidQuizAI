@@ -175,7 +175,7 @@ docker-compose down -v
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017
-DB_NAME=video_mcq_db
+DB_NAME=video-transcription
 REDIS_URI=redis://localhost:6379
 ```
 
