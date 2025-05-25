@@ -18,7 +18,7 @@ def call_ollama(prompt: str) -> List[Dict]:
             raise HTTPException(status_code=500, detail="Ollama API error: " + response.text)
 
         raw_output = response.json()["response"]
-        print("[DEBUG] Raw Ollama Response:", raw_output)
+        # print("[DEBUG] Raw Ollama Response:", raw_output)
 
         # Try parsing JSON directly (Ollama should return a JSON-formatted string inside `response`)
         mcqs = json.loads(raw_output)
